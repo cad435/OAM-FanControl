@@ -2,6 +2,8 @@
 #define PROG_LED_PIN 25
 #define PROG_BUTTON_PIN 4
 
+#define STATUS_LED_PIN 24
+
 #define KNX_UART_NUM 0
 #define KNX_UART_TX_PIN 0
 #define KNX_UART_RX_PIN 1
