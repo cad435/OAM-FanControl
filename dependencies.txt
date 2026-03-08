@@ -3,4 +3,4 @@
 7023e05 v1 lib/OGM-Common https://github.com/OpenKNX/OGM-Common
 # 75e4c00 v1 lib/OFM-FileTransferModule https://github.com/OpenKNX/OFM-FileTransferModule.git
 0411a9d v1 lib/OFM-UsbExchange https://github.com/OpenKNX/OFM-UsbExchange
-c0981af v1 lib/OFM-FanControl https://github.com/mrspieb/OFM-FanControl.git
+311c07a v1 lib/OFM-FanControl https://github.com/mrspieb/OFM-FanControl.git
