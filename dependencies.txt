@@ -1,6 +1,6 @@
-------- Built with -------
-4fb43ed v1 lib/knx https://github.com/OpenKNX/knx
-7023e05 v1 lib/OGM-Common https://github.com/OpenKNX/OGM-Common
-# 75e4c00 v1 lib/OFM-FileTransferModule https://github.com/OpenKNX/OFM-FileTransferModule.git
-0411a9d v1 lib/OFM-UsbExchange https://github.com/OpenKNX/OFM-UsbExchange
-311c07a v1 lib/OFM-FanControl https://github.com/mrspieb/OFM-FanControl.git
+﻿------- Built with -------
+7124a64 v1 lib/knx https://github.com/OpenKNX/knx
+311c07a main lib/OFM-FanControl https://github.com/mrspieb/OFM-FanControl.git
+eca6977 v1 lib/OFM-ConfigTransfer https://github.com/OpenKNX/OFM-ConfigTransfer
+55119fc v1 lib/OFM-UsbExchange https://github.com/OpenKNX/OFM-UsbExchange
+86dc82b v1 lib/OGM-Common https://github.com/OpenKNX/OGM-Common

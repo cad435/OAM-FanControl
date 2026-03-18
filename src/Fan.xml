@@ -24,7 +24,13 @@
     <op:verify File="../lib/OGM-Common/library.json" ModuleVersion="%BASE_VerifyVersion%" /> 
   </op:define>
 
-  <op:define prefix="FAN" ModuleType="99"
+  <op:define prefix="UCT" ModuleType="99"
+    share="../lib/OFM-ConfigTransfer/src/ConfigTransfer.share.xml"
+    noConfigTransfer="true">
+    <op:verify File="../lib/OFM-ConfigTransfer/library.json" ModuleVersion="0.5" />
+  </op:define>
+
+  <op:define prefix="FAN" ModuleType="20"
     share="../lib/OFM-FanControl/src/Fan.share.xml"
     template="../lib/OFM-FanControl/src/Fan.templ.xml"
     NumChannels="2"
@@ -33,6 +39,6 @@
     >
     <op:verify File="../lib/OFM-FanControl/library.json" ModuleVersion="%ReleaseApplicationVersion%" />
   </op:define>
- 
+
   <generate />
 </KNX>
