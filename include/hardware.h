@@ -1,16 +1,8 @@
-#define PROG_LED_PIN_ACTIVE_ON 1
-#define PROG_LED_PIN 25
-#define PROG_BUTTON_PIN 4
+#pragma once
 
-#define STATUS_LED_PIN 24
-
-#define KNX_UART_NUM 0
-#define KNX_UART_TX_PIN 0
-#define KNX_UART_RX_PIN 1
-
-#define FAN1_S1_PWM_PIN 9
-#define FAN1_S2_PWM_PIN 8
-#define FAN2_S1_PWM_PIN 7
-#define FAN2_S2_PWM_PIN 6
-#define FAN1_SW_PIN 13
-#define FAN2_SW_PIN 12
+#if defined(DEVICE_REG1_FAN_ADDON_X2)
+    #include "Reg1_FanAddon_X2.h"
+#else
+    // Default: original MrSpieb FanControl board
+    #include "MrSpiebFanControlHardware.h"
+#endif

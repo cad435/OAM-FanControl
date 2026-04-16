@@ -18,8 +18,7 @@ void loop()
 	openknx.loop();
 }
 
-//Wenn -D OPENKNX_DUALCORE verwendet wird
-/*
+#ifdef OPENKNX_DUALCORE
 void setup1()
 {
 	openknx.setup1();
@@ -29,4 +28,4 @@ void loop1()
 {
 	openknx.loop1();
 }
-*/
+#endif
