@@ -26,6 +26,12 @@ OpenKNX application module for controlling decentralized ventilation fans (e.g. 
   - Run via VSCode task "OpenKNXproducer Dev"
   - **Never edit knxprod.h manually** — always regenerate from XML
 - **Build**: VSCode task "Build" runs `lib/OGM-Common/scripts/build/OpenKNX-Build.ps1 develop_RP2040`
+- **Flash erase** (when KO layout changes break the device):
+  1. Hold BOOTSEL + reset to enter UF2 bootloader
+  2. Erase KNX flash: `picotool load blank.bin -t bin -o 0x100F4000` (48KB zeros at KNX+OpenKNX area)
+  3. Reload firmware: `picotool load -v -x firmware.uf2`
+  4. Reprogram from ETS with new `.knxprod`
+  - Note: picotool `-x` means "execute after load", NOT "erase". Must explicitly blank the KNX flash area.
 
 ## Key Conventions
 
@@ -38,7 +44,7 @@ OpenKNX application module for controlling decentralized ventilation fans (e.g. 
 ### Dependency Management
 - `dependencies.txt` pins commit hashes; `restore/Restore-Dependencies.ps1` clones and symlinks
 - Restore script creates detached HEAD — check out named branches before running Build-Dependencies
-- Forks: `origin` = mrspieb (upstream), `myfork` = cad435
+- Forks: `origin` = cad435 (your fork), `upstream` = mrspieb (original)
 
 ### Hardware Boards
 Two supported boards, selected via `-D DEVICE_*` in platformio.custom.ini:
@@ -76,7 +82,7 @@ Two supported boards, selected via `-D DEVICE_*` in platformio.custom.ini:
 | 6 | ManualSave | 1.002 | In | Manuelles Speichern auslösen |
 | 7 | Diagnose | 16.001 | Out | Diagnose-String |
 
-### FAN KOs (pro Kanal, Channel 1: KO 20–35, Channel 2: KO 36–51)
+### FAN KOs (pro Kanal, Channel 1: KO 20–39, Channel 2: KO 40–59)
 
 | Offset | Name | DPT | R/W | Description |
 |--------|------|-----|-----|-------------|
@@ -87,8 +93,8 @@ Two supported boards, selected via `-D DEVICE_*` in platformio.custom.ini:
 | +4 | Level | 5.010 (0–5) | In | Lüfterstufe direkt setzen (0=aus, 1–5). Setzt Manual Override — blockiert Automatik bis Schwellwert-Kreuzung oder Moduswechsel. |
 | +5 | LevelUpDown | 1.007 (Step) | In | Stufe +1 (=1) oder -1 (=0). Gleicher Manual Override wie Level. |
 | +6 | LevelFeedback | 5.010 (0–5) | Out | Rückmeldung der aktuellen Lüfterstufe. Wird bei jeder Geschwindigkeitsänderung gesendet (auch automatisch). |
-| +7 | OpMode | 1.003 (Enable) | In | Betriebsmodus umschalten: 0=Manuell, 1=Automatik. Nur aktiv wenn ETS-Parameter Betriebsmodus="Kommunikationsobjekt". |
-| +8 | OpModeFeedback | 1.003 (Enable) | Out | Rückmeldung Betriebsmodus (0=Manuell, 1=Automatik). |
+| +7 | OpMode | 5.010 (0–2) | In | Betriebsmodus umschalten: 0=Manuell, 1=Automatik, 2=Vollsteuerung. Nur aktiv wenn ETS-Parameter Betriebsmodus="Kommunikationsobjekt". |
+| +8 | OpModeFeedback | 5.010 (0–2) | Out | Rückmeldung Betriebsmodus (0=Manuell, 1=Automatik, 2=Vollsteuerung). |
 | +9 | VentMode | 5.010 (0–2) | In | Lüftungsmodus manuell: 0=Wärmerückgewinnung, 1=Zuluft, 2=Abluft. Nur aktiv wenn ETS-Parameter="Kommunikationsobjekt". |
 | +10 | VentModeFeedback | 5.010 (0–2) | Out | Rückmeldung Lüftungsmodus (0=WRG, 1=Zuluft, 2=Abluft). |
 | +11 | TimerActivation | 1.010 (Start) | In | Timer starten (=1) oder stoppen (=0). Bei Start: Lüfter läuft für konfigurierte Laufzeit, dann automatischer Stopp. Bei Stop: Lüfter sofort aus. |
@@ -96,17 +102,36 @@ Two supported boards, selected via `-D DEVICE_*` in platformio.custom.ini:
 | +13 | VentModeAutomatic | 5.010 (0–2) | In | Lüftungsmodus im Automatikbetrieb: 0=WRG, 1=Zuluft, 2=Abluft. Separat vom manuellen Modus konfigurierbar. Nur aktiv wenn ETS-Parameter="Kommunikationsobjekt". |
 | +14 | VentModeFeedbackAutomatic | 5.010 (0–2) | Out | Rückmeldung Lüftungsmodus Automatik. |
 | +15 | TachoRPM | 7.001 (pulses) | Out | Drehzahl Rückmeldung in RPM. Nur auf Hardware mit Tacho-Eingang (Reg1 Fan-Addon). Wird jede Sekunde aktualisiert, per Bus-Read abfragbar. |
+| +16 | FullControlPower | 1.001 (Switch) | In | Vollsteuerung: Lüfter Ein/Aus. |
+| +17 | FullControlSpeed | 5.001 (%) | In | Vollsteuerung: Geschwindigkeit 0–100%. |
+| +18 | FullControlDirection | 1.001 (Switch) | In | Vollsteuerung: Drehrichtung 0=Zuluft / 1=Abluft. |
+| +19 | FullControlSpeedFeedback | 5.001 (%) | Out | Vollsteuerung: Geschwindigkeit Rückmeldung. |
+
+### Betriebsmodi (ETS-Parameter)
+
+| Wert | Modus | Beschreibung |
+|------|-------|-------------|
+| 0 | Aus | Lüfter deaktiviert, keine KOs sichtbar |
+| 1 | Manuell | Steuerung über Level/LevelUpDown KOs (Stufe 0–5) |
+| 2 | Automatik | Feuchtegesteuert mit Schwellwert/Adaptiv-Regelung |
+| 3 | Kommunikationsobjekt | Moduswechsel via OpMode KO (0=Manuell, 1=Automatik, 2=Vollsteuerung) |
+| 4 | Vollsteuerung | Direktsteuerung: Power, Speed (0–100%), Direction via FullControl KOs |
 
 ### KO-Sichtbarkeit in ETS (abhängig von Parametern)
 
 Die KOs werden in der ETS dynamisch ein-/ausgeblendet:
 - **Betriebsmodus = Aus**: Keine KOs sichtbar
-- **Betriebsmodus != Aus**: Level, LevelUpDown, LevelFeedback, Timer immer sichtbar
-- **Betriebsmodus = KO**: Zusätzlich OpMode + OpModeFeedback
-- **Automatik aktiv** (Modus >= 2): HumidityInside + Automatik-Parameter sichtbar
+- **Betriebsmodus != Aus**: Level, LevelUpDown, LevelFeedback, Timer, TachoRPM immer sichtbar
+- **Betriebsmodus = KO**: Zusätzlich OpMode + OpModeFeedback + alle Vollsteuerung-KOs
+- **Betriebsmodus = Vollsteuerung**: FullControl KOs sichtbar (Power, Speed, Direction, SpeedFeedback)
+- **Automatik aktiv** (Modus = Automatik oder KO): HumidityInside + Automatik-Parameter sichtbar
 - **Feuchtemessung = Absolut**: Zusätzlich TemperatureInside, HumidityOutside, TemperatureOutside
 - **Lüftungsmodus = KO**: VentMode + Feedback sichtbar
 - **Lüftungsmodus Automatik = KO**: VentModeAutomatic + Feedback sichtbar
+
+## Important: KO Layout Changes
+
+When adding/removing KOs or changing KO sizes (e.g. 1-bit → 1-byte), the KO table in flash becomes incompatible. The device will hang if the old KO data doesn't match the new firmware. **Always bump the version** in Fan.conf.xml when changing KO layout, and reprogram from ETS. If the device hangs, use the flash erase procedure above.
 
 ## Pending Work (from forum review by coko)
 
